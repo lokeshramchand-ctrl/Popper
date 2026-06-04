@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'local_db.dart';
 import 'api_service.dart';
+import 'log_entry.dart';
 
 class SyncService {
   final ApiService api;
@@ -31,4 +32,30 @@ class SyncService {
     debugPrint('[SyncService] synced $synced / ${unsynced.length}');
     return synced;
   }
+
+  Future<int> restoreFromServer(String deviceId) async {
+    final remoteLogs = await api.fetchRecords(deviceId);
+    final localIds = LocalDB.getAll().map((e) => e.id).toSet();
+
+    int imported = 0;
+
+    for (final item in remoteLogs) {
+      if (localIds.contains(item.id)) {
+        continue;
+      }
+
+      await LocalDB.save(
+        LogEntry(
+          id: item.id,
+          timestamp: item.timestamp.toUtc(),
+          isSynced: true,
+        ),
+      );
+
+      imported++;
+    }
+
+    return imported;
+  }
+
 }
