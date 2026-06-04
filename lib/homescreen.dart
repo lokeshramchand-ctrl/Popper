@@ -327,9 +327,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 AnimatedDefaultTextStyle(
                   duration: const Duration(milliseconds: 300),
                   style: const TextStyle(fontFamily: 'IBMPlexMono'),
-                  child: Text('Lokesh' ,style: TextStyle(
-                    color:_terracotta
-                  ),),
+                  child: Text(""),
 
                 ),
               ],
