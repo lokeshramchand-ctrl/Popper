@@ -5,10 +5,11 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:uuid/uuid.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'api_service.dart';
-import 'local_db.dart';
-import 'log_entry.dart';
-import 'sync_service.dart';
+import '../config/app_config.dart';
+import '../services/api_service.dart';
+import '../data/local_db.dart';
+import '../models/log_entry.dart';
+import '../services/sync_service.dart';
 // ─────────────────────────────────────────────────────────────────
 //  HistoryScreen  –  "Apothecary Logbook  /  Log Register"
 //
@@ -480,8 +481,12 @@ class _HistoryScreenState extends State<HistoryScreen>
 
     // Working state inside the sheet
     final today = DateTime.now();
-    // Latest selectable: yesterday
+    // Latest selectable: yesterday (or today when the open range is enabled)
     final yesterday = DateTime(today.year, today.month, today.day - 1);
+    final openRange = AppConfig.openDateRange;
+    final lastSelectable = openRange
+        ? DateTime(today.year, today.month, today.day)
+        : yesterday;
 
     DateTime selectedDate = yesterday;
     TimeOfDay selectedTime = const TimeOfDay(hour: 12, minute: 0);
@@ -500,8 +505,8 @@ class _HistoryScreenState extends State<HistoryScreen>
               final picked = await showDatePicker(
                 context: ctx,
                 initialDate: selectedDate,
-                firstDate: DateTime(2020),
-                lastDate: yesterday, // never today or future
+                firstDate: openRange ? DateTime(2000) : DateTime(2020),
+                lastDate: lastSelectable, // never future
                 builder: (context, child) => Theme(
                   data: ThemeData.light().copyWith(
                     colorScheme: const ColorScheme.light(
@@ -574,7 +579,12 @@ class _HistoryScreenState extends State<HistoryScreen>
                 today.month,
                 today.day,
               );
-              if (!dt.isBefore(todayMidnight)) {
+              if (openRange) {
+                if (dt.isAfter(DateTime.now())) {
+                  setSheet(() => errorMsg = 'TIME CANNOT BE IN THE FUTURE');
+                  return;
+                }
+              } else if (!dt.isBefore(todayMidnight)) {
                 setSheet(() => errorMsg = 'DATE MUST BE BEFORE TODAY');
                 return;
               }
@@ -777,7 +787,9 @@ class _HistoryScreenState extends State<HistoryScreen>
                   // ── disclaimer ────────────────────────────────
                   Center(
                     child: Text(
-                      'ENTRIES BEFORE TODAY ONLY',
+                      openRange
+                          ? 'ANY DATE UP TO NOW'
+                          : 'ENTRIES BEFORE TODAY ONLY',
                       style: GoogleFonts.ibmPlexMono(
                         color: _dust.withOpacity(0.5),
                         fontSize: 7.5,

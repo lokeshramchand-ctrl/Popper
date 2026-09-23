@@ -3,10 +3,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:uuid/uuid.dart';
-import 'log_entry.dart';
-import 'local_db.dart';
-import 'api_service.dart';
-import 'sync_service.dart';
+import '../models/log_entry.dart';
+import '../data/local_db.dart';
+import '../services/api_service.dart';
+import '../services/sync_service.dart';
 
 // ─────────────────────────────────────────────────────────────────
 //  DESIGN SYSTEM  –  "Apothecary Logbook"
@@ -42,6 +42,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   // ── UI state ───────────────────────────────────────────────────
   bool _isLogging = false;
   bool _isSyncing = false;
+
+  // Hidden entry to the Back Office: 7 taps on the header date within 3s.
+  int _secretTaps = 0;
+  DateTime? _firstSecretTap;
 
   // ── Controllers ────────────────────────────────────────────────
   late AnimationController _stampCtrl;
@@ -190,6 +194,26 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     if (mounted) setState(() => _isSyncing = false);
   }
 
+  // ── Back Office gesture ─────────────────────────────────────────
+  void _onHeaderTap() {
+    final now = DateTime.now();
+    if (_firstSecretTap == null ||
+        now.difference(_firstSecretTap!) > const Duration(seconds: 3)) {
+      _firstSecretTap = now;
+      _secretTaps = 0;
+    }
+    _secretTaps++;
+    if (_secretTaps < 7) return;
+
+    _secretTaps = 0;
+    _firstSecretTap = null;
+    HapticFeedback.heavyImpact();
+    Navigator.pushNamed(context, '/back-office').then((_) {
+      // Data may have been seeded, cleared or pulled from another server.
+      if (mounted) load();
+    });
+  }
+
   // ── Formatting ──────────────────────────────────────────────────
   String _pad(int v) => v.toString().padLeft(2, '0');
 
@@ -297,14 +321,18 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                _headerDate(),
-                style: const TextStyle(
-                  fontFamily: 'IBMPlexMono',
-                  color: _walnut,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 1.8,
+              GestureDetector(
+                onTap: _onHeaderTap,
+                behavior: HitTestBehavior.opaque,
+                child: Text(
+                  _headerDate(),
+                  style: const TextStyle(
+                    fontFamily: 'IBMPlexMono',
+                    color: _walnut,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 1.8,
+                  ),
                 ),
               ),
             

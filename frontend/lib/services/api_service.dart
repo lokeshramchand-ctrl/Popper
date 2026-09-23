@@ -1,11 +1,27 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
-import 'log_entry.dart';
+import '../config/app_config.dart';
+import '../models/log_entry.dart';
 
 class ApiService {
-  final String baseUrl =
-      "https://lt9e0fj1favccw8wxgggl2d2.deploy.splsystems.in";
+  /// Resolved on every call so a server switch applies immediately.
+  String get baseUrl => AppConfig.baseUrl;
+
+  /// Hits the health route. Returns round-trip time, or null if unreachable.
+  Future<Duration?> ping() async {
+    final sw = Stopwatch()..start();
+    try {
+      final res = await http
+          .get(Uri.parse('$baseUrl/'))
+          .timeout(const Duration(seconds: 6));
+      sw.stop();
+      return res.statusCode == 200 ? sw.elapsed : null;
+    } catch (e) {
+      debugPrint('[ping] $baseUrl failed: $e');
+      return null;
+    }
+  }
 
   Future<bool> getTodayStatus(String deviceId) async {
     final res = await http.get(

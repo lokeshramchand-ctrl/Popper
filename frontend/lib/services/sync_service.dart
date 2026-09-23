@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
-import 'local_db.dart';
+import '../data/local_db.dart';
 import 'api_service.dart';
-import 'log_entry.dart';
+import '../models/log_entry.dart';
 
 class SyncService {
   final ApiService api;

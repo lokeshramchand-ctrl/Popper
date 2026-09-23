@@ -1,5 +1,5 @@
 import 'package:hive_flutter/hive_flutter.dart';
-import 'log_entry.dart';
+import '../models/log_entry.dart';
 
 class LocalDB {
   static const boxName = "logs";

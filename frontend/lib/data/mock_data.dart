@@ -1,6 +1,6 @@
 import 'package:uuid/uuid.dart';
 import 'local_db.dart';
-import 'log_entry.dart';
+import '../models/log_entry.dart';
 
 class MockData {
   static Future<void> seed({
